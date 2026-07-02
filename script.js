@@ -36,6 +36,49 @@ const audiences = [
 ];
 
 const collaborationAudiences = audiences.filter(item => item.id !== "readers");
+const whatsAppUrl = "https://wa.me/77077572504";
+
+const currentBook = {
+  month: "Книга месяца",
+  title: "Скоро объявим новый выбор PAGE17",
+  author: "Следите за анонсом",
+  date: "Дата обсуждения появится здесь",
+  note: "Этот блок станет главным ритуалом клуба: одна книга, один месяц, одна встреча и общий разговор, к которому легко присоединиться.",
+  cta: "Записаться в клуб"
+};
+
+const pastBooks = [
+  {
+    title: "Первая книжная полка PAGE17",
+    date: "Архив обсуждений",
+    summary: "Здесь появятся книги, которые клуб уже читал: дата встречи, короткий дайджест разговора, вопросы и фотографии атмосферы."
+  },
+  {
+    title: "Дайджест встречи",
+    date: "После обсуждения",
+    summary: "Для каждой книги можно сохранять 3 мысли встречи, цитату, фото и ссылку на пост или сторис."
+  },
+  {
+    title: "Рекомендации участников",
+    date: "Постоянная рубрика",
+    summary: "Отдельное место для книг, которые участники советуют друг другу после клубных встреч."
+  }
+];
+
+const pressLinks = [
+  {
+    source: "SKO24",
+    title: "В Петропавловске книжный клуб Page 17 возрождает любовь к чтению и живому общению",
+    url: "https://sko24.kz/ru/article/1594",
+    type: "СМИ"
+  },
+  {
+    source: "Instagram",
+    title: "Публикация о PAGE17",
+    url: "https://www.instagram.com/p/DUqGSG1DCgR/?igsh=OXg5OTNlNHYwcHds",
+    type: "Соцсети"
+  }
+];
 
 const pageData = {
   readers: {
@@ -107,6 +150,7 @@ const routes = {
   libraries: () => renderAudiencePage("libraries"),
   publishers: () => renderAudiencePage("publishers"),
   partners: () => renderAudiencePage("partners"),
+  books: renderBooks,
   events: renderEvents,
   about: renderAbout,
   media: renderMedia,
@@ -124,20 +168,34 @@ menuButton.addEventListener("click", () => {
 
 document.addEventListener("click", event => {
   const tab = event.target.closest(".audience-tab");
-  if (!tab) return;
+  const mediaTab = event.target.closest(".media-tab");
+  const nextSlide = event.target.closest("[data-slider-next]");
+  const prevSlide = event.target.closest("[data-slider-prev]");
 
-  const section = tab.closest(".audience-switcher");
-  const target = tab.dataset.target;
+  if (tab) {
+    const section = tab.closest(".audience-switcher, .audience-slider");
+    const target = tab.dataset.target;
 
-  section.querySelectorAll(".audience-tab").forEach(button => {
-    const isActive = button.dataset.target === target;
-    button.classList.toggle("is-active", isActive);
-    button.setAttribute("aria-selected", String(isActive));
-  });
+    section.querySelectorAll(".audience-tab").forEach(button => {
+      const isActive = button.dataset.target === target;
+      button.classList.toggle("is-active", isActive);
+      button.setAttribute("aria-selected", String(isActive));
+    });
 
-  section.querySelectorAll(".audience-panel").forEach(panel => {
-    panel.classList.toggle("is-active", panel.id === `panel-${target}`);
-  });
+    section.querySelectorAll(".audience-panel").forEach(panel => {
+      panel.classList.toggle("is-active", panel.id === `panel-${target}`);
+    });
+    return;
+  }
+
+  if (mediaTab) {
+    setMediaTab(mediaTab);
+    return;
+  }
+
+  if (nextSlide || prevSlide) {
+    moveAudienceSlide(nextSlide ? 1 : -1);
+  }
 });
 
 window.addEventListener("hashchange", render);
@@ -165,11 +223,12 @@ function renderHome() {
         <p class="hero-lead">Место, куда хочется возвращаться ради книг, людей и разговоров.</p>
         <p class="hero-description">Книжный клуб для тех, кто хочет читать, обсуждать, открывать новые книги и находить людей, с которыми хочется говорить глубже.</p>
         <div class="actions">
-          <a class="button" href="#readers">Присоединиться к клубу</a>
+          <a class="button" href="${whatsAppUrl}" target="_blank" rel="noreferrer">Присоединиться к клубу</a>
           <a class="button secondary" href="#events">Посмотреть ближайшую встречу</a>
         </div>
       </div>
     </section>
+    ${bookMonthSection()}
     <section class="section">
       <div class="section-inner intro-grid">
         <div class="section-title">
@@ -226,10 +285,11 @@ function renderAudiencePage(id) {
     <section class="page-hero">
       <div class="section-inner">
         <div>
+          <a class="back-link" href="#home">← На главную</a>
           <span class="eyebrow">${page.tag}</span>
           <h1>${page.title}</h1>
           <p class="hero-lead">${page.lead}</p>
-          <a class="button" href="#contacts">${page.cta}</a>
+          <a class="button" href="${id === "readers" ? whatsAppUrl : "#contacts"}" ${id === "readers" ? 'target="_blank" rel="noreferrer"' : ""}>${page.cta}</a>
         </div>
         <div class="quote-panel">
           <strong>Навигация раздела</strong>
@@ -263,6 +323,7 @@ function renderEvents() {
         ${eventCard()}
       </div>
     </section>
+    ${bookMonthSection()}
   `;
 }
 
@@ -290,14 +351,44 @@ function renderMedia() {
       <div class="section-inner">
         <div>
           <span class="eyebrow">Медиа</span>
-          <h1>Заметки, рекомендации и интервью</h1>
-          <p class="hero-lead">На первом этапе здесь можно собирать статьи, книжные подборки, интервью и ссылки на Instagram и Telegram.</p>
+          <h1>Медиа PAGE17</h1>
+          <p class="hero-lead">Здесь собираются наши материалы, публикации о клубе и будущий ежемесячный подкаст с героинями.</p>
         </div>
       </div>
     </section>
-    <section class="section"><div class="section-inner card-grid">
-      ${["Рекомендации книг", "Интервью", "Заметки клуба"].map((item, index) => featureCard(index + 1, item, "Место для будущих публикаций PAGE17.")).join("")}
-    </div></section>
+    <section class="section">
+      <div class="section-inner">
+        <div class="media-tabs" role="tablist" aria-label="Разделы медиа">
+          <button class="media-tab is-active" type="button" data-media-target="own">Мы пишем</button>
+          <button class="media-tab" type="button" data-media-target="press">О нас пишут</button>
+          <button class="media-tab" type="button" data-media-target="podcast">Подкаст</button>
+        </div>
+        <div class="media-panel is-active" id="media-own">
+          <div class="card-grid">
+            ${["Рекомендации книг", "Интервью", "Заметки клуба"].map((item, index) => featureCard(index + 1, item, "Место для будущих публикаций PAGE17: короткие тексты, подборки, вопросы к встречам и читательские заметки.")).join("")}
+          </div>
+        </div>
+        <div class="media-panel" id="media-press">
+          <div class="press-list">
+            ${pressLinks.map(item => `
+              <a class="press-card" href="${item.url}" target="_blank" rel="noreferrer">
+                <span>${item.type} · ${item.source}</span>
+                <strong>${item.title}</strong>
+                <em>Открыть материал</em>
+              </a>
+            `).join("")}
+          </div>
+        </div>
+        <div class="media-panel" id="media-podcast">
+          <article class="podcast-card">
+            <span class="eyebrow">Скоро</span>
+            <h2>Первый подкаст с героиней PAGE17</h2>
+            <p>Оставляем здесь место для постоянной ежемесячной рубрики: разговоры с героинями, авторами, читательницами и людьми, которые создают культурную среду вокруг книг.</p>
+            <a class="button secondary" href="#contacts">Предложить героиню</a>
+          </article>
+        </div>
+      </div>
+    </section>
   `;
 }
 
@@ -319,6 +410,7 @@ function renderContacts() {
           <div class="contact-list">
             <a href="https://instagram.com/" target="_blank" rel="noreferrer">Instagram</a>
             <a href="https://t.me/" target="_blank" rel="noreferrer">Telegram</a>
+            <a href="${whatsAppUrl}" target="_blank" rel="noreferrer">WhatsApp Дины</a>
             <a href="mailto:hello@page17.club">hello@page17.club</a>
           </div>
         </div>
@@ -340,9 +432,26 @@ function eventCard() {
       <div>
         <h3>Следующая встреча PAGE17</h3>
         <p>Скоро объявим следующую встречу. Следите за обновлениями в Instagram и Telegram или оставьте контакт, чтобы получить анонс.</p>
-        <a class="button" href="#contacts">Получить анонс</a>
+        <a class="button" href="${whatsAppUrl}" target="_blank" rel="noreferrer">Зарегистрироваться</a>
       </div>
     </article>
+  `;
+}
+
+function renderBooks() {
+  return `
+    <section class="page-hero">
+      <div class="section-inner">
+        <div>
+          <a class="back-link" href="#home">← На главную</a>
+          <span class="eyebrow">Книжная полка</span>
+          <h1>Книги PAGE17</h1>
+          <p class="hero-lead">Текущий выбор клуба, архив прошлых обсуждений и дайджесты встреч.</p>
+        </div>
+        ${bookCard()}
+      </div>
+    </section>
+    ${pastBooksSection()}
   `;
 }
 
@@ -379,14 +488,19 @@ function audienceSection() {
           <h2>PAGE17 - книжный клуб, вокруг которого постепенно формируется литературное пространство</h2>
           <p>Выберите направление сотрудничества, чтобы увидеть подходящий формат и следующий шаг.</p>
         </div>
-        <div class="audience-switcher">
-          <div class="audience-tabs" role="tablist" aria-label="Направления сотрудничества">
-            ${collaborationAudiences.map((item, index) => `
-              <button class="audience-tab ${index === 0 ? "is-active" : ""}" type="button" role="tab" aria-selected="${index === 0}" data-target="${item.id}">
-                <span>${item.tag}</span>
-                <strong>${item.title}</strong>
-              </button>
-            `).join("")}
+        <div class="audience-slider" data-active-slide="0">
+          <div class="slider-topline">
+            <div class="slider-dots" aria-label="Направления сотрудничества">
+              ${collaborationAudiences.map((item, index) => `
+                <button class="audience-tab ${index === 0 ? "is-active" : ""}" type="button" role="tab" aria-selected="${index === 0}" data-target="${item.id}">
+                  ${item.tag}
+                </button>
+              `).join("")}
+            </div>
+            <div class="slider-controls">
+              <button class="icon-button" type="button" aria-label="Предыдущее направление" data-slider-prev>‹</button>
+              <button class="icon-button" type="button" aria-label="Следующее направление" data-slider-next>›</button>
+            </div>
           </div>
           <div class="audience-panels">
             ${collaborationAudiences.map((item, index) => `
@@ -395,8 +509,8 @@ function audienceSection() {
                 <h3>${item.title}</h3>
                 <p>${item.text}</p>
                 <div class="actions">
-                  <a class="button" href="#${item.id}">${item.cta}</a>
-                  <a class="button secondary" href="#contacts">Связаться</a>
+                  <a class="button" href="#${item.id}">Подробнее</a>
+                  <a class="button secondary" href="#contacts">${item.cta}</a>
                 </div>
               </article>
             `).join("")}
@@ -405,9 +519,83 @@ function audienceSection() {
         <div class="reader-note">
           <strong>Для читателей</strong>
           <p>Вступление в клуб осталось отдельным основным путем: можно перейти в раздел для читателей или оставить контакт для анонсов.</p>
-          <a class="button secondary" href="#readers">Присоединиться к клубу</a>
+          <a class="button secondary" href="${whatsAppUrl}" target="_blank" rel="noreferrer">Присоединиться к клубу</a>
         </div>
       </div>
     </section>
   `;
+}
+
+function bookMonthSection() {
+  return `
+    <section class="section book-month-band">
+      <div class="section-inner book-month">
+        <div class="section-title">
+          <span class="eyebrow">${currentBook.month}</span>
+          <h2>Один выбор, один месяц, один общий разговор</h2>
+          <p>Книга месяца может стать главным регулярным ритуалом PAGE17 и точкой входа для новых участников.</p>
+        </div>
+        ${bookCard()}
+      </div>
+    </section>
+  `;
+}
+
+function bookCard() {
+  return `
+    <article class="book-card">
+      <div class="book-cover">
+        <span>PAGE</span>
+        <strong>17</strong>
+      </div>
+      <div>
+        <span class="eyebrow">${currentBook.date}</span>
+        <h3>${currentBook.title}</h3>
+        <p>${currentBook.note}</p>
+        <div class="actions">
+          <a class="button" href="${whatsAppUrl}" target="_blank" rel="noreferrer">${currentBook.cta}</a>
+          <a class="button secondary" href="#books">Прошлые книги</a>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function pastBooksSection() {
+  return `
+    <section class="section">
+      <div class="section-inner">
+        <div class="section-title">
+          <span class="eyebrow">Архив</span>
+          <h2>Прошлые книги и дайджесты встреч</h2>
+          <p>Когда появятся реальные обсуждения, сюда можно добавлять краткие итоги, фото, вопросы и ссылки на посты.</p>
+        </div>
+        <div class="card-grid">
+          ${pastBooks.map((item, index) => featureCard(index + 1, item.title, `${item.date}. ${item.summary}`)).join("")}
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function setMediaTab(tab) {
+  const target = tab.dataset.mediaTarget;
+  const root = tab.closest(".section-inner");
+
+  root.querySelectorAll(".media-tab").forEach(button => {
+    button.classList.toggle("is-active", button.dataset.mediaTarget === target);
+  });
+  root.querySelectorAll(".media-panel").forEach(panel => {
+    panel.classList.toggle("is-active", panel.id === `media-${target}`);
+  });
+}
+
+function moveAudienceSlide(direction) {
+  const slider = document.querySelector(".audience-slider");
+  if (!slider) return;
+
+  const tabs = [...slider.querySelectorAll(".audience-tab")];
+  const activeIndex = tabs.findIndex(tab => tab.classList.contains("is-active"));
+  const nextIndex = (activeIndex + direction + tabs.length) % tabs.length;
+  tabs[nextIndex].click();
 }
