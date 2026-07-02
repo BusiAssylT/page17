@@ -86,10 +86,10 @@ const pageData = {
     title: "Книжный клуб, куда легко прийти впервые",
     lead: "PAGE17 помогает читать регулярнее, встречаться с людьми по духу и обсуждать книги в теплой живой атмосфере.",
     cta: "Присоединиться к клубу",
-    mini: ["О клубе", "Как проходят встречи", "Ближайшая встреча", "FAQ", "Присоединиться"],
+    mini: ["О клубе", "Как проходят встречи", "Книга месяца", "FAQ", "Присоединиться"],
     rows: [
       ["Как проходят встречи", "Мы заранее читаем выбранную книгу, встречаемся в спокойном пространстве и обсуждаем не только сюжет, но и то, что книга запускает внутри разговора."],
-      ["Ближайшая встреча", "Если встреча еще не объявлена, мы сообщим о ней в Instagram и Telegram. На сайте можно оставить контакт, чтобы получить анонс."],
+      ["Книга месяца", "Анонс книги, дата обсуждения и регистрация будут жить в общем книжном блоке. Так человеку сразу понятно, что читать и как попасть на встречу."],
       ["FAQ", "Можно прийти без опыта книжных клубов, можно сначала просто слушать, а можно активно участвовать в обсуждении."]
     ]
   },
@@ -241,40 +241,7 @@ function renderHome() {
         </div>
       </div>
     </section>
-    <section class="section">
-      <div class="section-inner">
-        <div class="section-title">
-          <span class="eyebrow">Ближайшая встреча</span>
-          <h2>Скоро объявим следующую встречу</h2>
-        </div>
-        ${eventCard()}
-      </div>
-    </section>
-    <section class="section">
-      <div class="section-inner">
-        <div class="section-title">
-          <span class="eyebrow">Как проходят встречи</span>
-          <h2>Простой ритм, к которому легко присоединиться</h2>
-        </div>
-        <div class="steps">
-          ${["Читаем книгу", "Встречаемся", "Обсуждаем", "Знакомимся", "Возвращаемся снова"].map((step, index) => `
-            <div class="step"><b>${String(index + 1).padStart(2, "0")}</b>${step}</div>
-          `).join("")}
-        </div>
-      </div>
-    </section>
-    <section class="section">
-      <div class="section-inner">
-        <div class="section-title">
-          <span class="eyebrow">Почему приходят</span>
-          <h2>Чтобы читать не в одиночку</h2>
-        </div>
-        <div class="card-grid">
-          ${["Читать регулярнее", "Обсуждать книги глубже", "Находить близких по духу людей", "Открывать новых авторов", "Быть частью культурного сообщества", "Возвращаться к чтению без давления"].map((item, index) => featureCard(index + 1, item, "Камерный формат помогает прийти, включиться в разговор и почувствовать себя на своем месте.")).join("")}
-        </div>
-      </div>
-    </section>
-    ${gallerySection()}
+    ${clubExperienceSection()}
     ${audienceSection()}
   `;
 }
@@ -457,6 +424,45 @@ function renderBooks() {
 
 function featureCard(number, title, text) {
   return `<article class="card"><div class="card-number">${String(number).padStart(2, "0")}</div><h3>${title}</h3><p>${text}</p></article>`;
+}
+
+function clubExperienceSection() {
+  const reasons = [
+    ["Читать регулярнее", "Книга месяца задает мягкий ритм и помогает возвращаться к чтению без давления."],
+    ["Обсуждать глубже", "На встречах говорят не только о сюжете, но и о том, что книга меняет в нас."],
+    ["Находить своих", "Клуб собирает людей, с которыми хочется продолжать разговор после последней страницы."]
+  ];
+
+  return `
+    <section class="section experience-section">
+      <div class="section-inner experience-layout">
+        <div class="experience-copy">
+          <div class="section-title">
+            <span class="eyebrow">Как это устроено</span>
+            <h2>Читаем книгу, встречаемся и разговариваем по-настоящему</h2>
+            <p>PAGE17 держится на простом клубном ритме: общий выбор месяца, живая встреча, спокойная атмосфера и люди, которым важны книги.</p>
+          </div>
+          <div class="experience-steps">
+            ${["Выбираем книгу месяца", "Читаем в своем темпе", "Встречаемся и обсуждаем", "Делимся мыслями и возвращаемся снова"].map((step, index) => `
+              <div class="experience-step"><b>${String(index + 1).padStart(2, "0")}</b><span>${step}</span></div>
+            `).join("")}
+          </div>
+        </div>
+        <div class="experience-visual">
+          <div class="gallery-item img-books" data-label="встречи"></div>
+          <div class="gallery-item img-notes" data-label="заметки"></div>
+        </div>
+        <div class="experience-reasons">
+          ${reasons.map(item => `
+            <article class="reason-card">
+              <h3>${item[0]}</h3>
+              <p>${item[1]}</p>
+            </article>
+          `).join("")}
+        </div>
+      </div>
+    </section>
+  `;
 }
 
 function gallerySection() {
