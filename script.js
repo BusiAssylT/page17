@@ -83,12 +83,13 @@ const pressLinks = [
 const podcastEpisodes = [
   {
     number: "01",
-    title: "Первое интервью PAGE17",
-    subtitle: "Разговор с героиней о книгах, личном пути и живом интересе к чтению.",
+    title: "Книги как повод услышать человека",
+    subtitle: "Пилотный видеоразговор PAGE17 о личных историях, чтении и том, почему вокруг книг рождается живое общение.",
     url: "https://youtu.be/mLO7DZBuRyg?si=biMcqOUuM5JH4E4s",
     embedUrl: "https://www.youtube.com/embed/mLO7DZBuRyg",
-    note: "Этот выпуск открывает будущую ежемесячную рубрику PAGE17: разговоры с героинями, авторами, читателями и людьми, которые формируют культурную среду вокруг книг.",
-    topics: ["книги и личные истории", "путь героини", "чтение как часть жизни", "разговоры вокруг литературы"]
+    date: "4 июля 2026",
+    note: "Первый выпуск открывает будущую ежемесячную рубрику: разговоры с героинями, авторами, читателями и людьми, которые помогают увидеть литературу через человеческий опыт.",
+    topics: ["личная история", "книги и выбор", "живое общение", "культура чтения"]
   }
 ];
 
@@ -166,7 +167,7 @@ const routes = {
   events: renderEvents,
   about: renderAbout,
   media: renderMedia,
-  podcast: renderPodcast,
+  podcast: () => renderMedia("podcast"),
   contacts: renderContacts
 };
 
@@ -325,7 +326,9 @@ function renderAbout() {
   `;
 }
 
-function renderMedia() {
+function renderMedia(activeTab = "own") {
+  const isActive = tab => tab === activeTab ? "is-active" : "";
+
   return `
     <section class="page-hero">
       <div class="section-inner">
@@ -339,16 +342,16 @@ function renderMedia() {
     <section class="section">
       <div class="section-inner">
         <div class="media-tabs" role="tablist" aria-label="Разделы медиа">
-          <button class="media-tab is-active" type="button" data-media-target="own">Мы пишем</button>
-          <button class="media-tab" type="button" data-media-target="press">О нас пишут</button>
-          <button class="media-tab" type="button" data-media-target="podcast">Подкаст</button>
+          <button class="media-tab ${isActive("own")}" type="button" data-media-target="own">Мы пишем</button>
+          <button class="media-tab ${isActive("press")}" type="button" data-media-target="press">О нас пишут</button>
+          <button class="media-tab ${isActive("podcast")}" type="button" data-media-target="podcast">Подкаст</button>
         </div>
-        <div class="media-panel is-active" id="media-own">
+        <div class="media-panel ${isActive("own")}" id="media-own">
           <div class="card-grid">
             ${["Рекомендации книг", "Интервью", "Заметки клуба"].map((item, index) => featureCard(index + 1, item, "Место для будущих публикаций PAGE17: короткие тексты, подборки, вопросы к встречам и читательские заметки.")).join("")}
           </div>
         </div>
-        <div class="media-panel" id="media-press">
+        <div class="media-panel ${isActive("press")}" id="media-press">
           <div class="press-list">
             ${pressLinks.map(item => `
               <a class="press-card" href="${item.url}" target="_blank" rel="noreferrer">
@@ -359,47 +362,31 @@ function renderMedia() {
             `).join("")}
           </div>
         </div>
-        <div class="media-panel" id="media-podcast">
-          <article class="podcast-card">
-            <span class="eyebrow">Первый выпуск</span>
-            <h2>${podcastEpisodes[0].title}</h2>
-            <p>${podcastEpisodes[0].note}</p>
-            <div class="actions">
-              <a class="button" href="#podcast">Смотреть выпуск</a>
-              <a class="button secondary" href="#contacts">Предложить героиню</a>
-            </div>
-          </article>
+        <div class="media-panel ${isActive("podcast")}" id="media-podcast">
+          ${podcastSection()}
         </div>
       </div>
     </section>
   `;
 }
 
-function renderPodcast() {
+function podcastSection() {
   const episode = podcastEpisodes[0];
 
   return `
-    <section class="page-hero">
-      <div class="section-inner">
-        <div>
-          <a class="back-link" href="#media">← В медиа</a>
-          <span class="eyebrow">Подкаст PAGE17</span>
-          <h1>Разговоры, которые продолжают книгу</h1>
-          <p class="hero-lead">Ежемесячная рубрика с героинями, авторами и людьми, для которых чтение становится частью личной и культурной истории.</p>
-        </div>
-        <div class="quote-panel">
-          <strong>Что будет на странице</strong>
-          <p>Видео выпуска, короткое описание, темы разговора, ссылки, заметки редакции и архив будущих эпизодов.</p>
-        </div>
-      </div>
-    </section>
-    <section class="section">
-      <div class="section-inner episode-layout">
+    <div class="podcast-intro">
+      <span class="eyebrow">Подкаст PAGE17</span>
+      <h2>Разговоры, которые продолжают книгу</h2>
+      <p>Здесь будут выходить видеоразговоры PAGE17. Свежий выпуск остается наверху, а предыдущие постепенно уходят ниже в архив.</p>
+    </div>
+    <div class="episode-layout">
+      <div>
         <div class="video-shell">
           <iframe src="${episode.embedUrl}" title="${episode.title}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
         </div>
+      </div>
         <article class="episode-card">
-          <span class="eyebrow">Выпуск ${episode.number}</span>
+          <span class="eyebrow">Выпуск ${episode.number} · ${episode.date}</span>
           <h2>${episode.title}</h2>
           <p>${episode.subtitle}</p>
           <p>${episode.note}</p>
@@ -411,20 +398,17 @@ function renderPodcast() {
             <a class="button secondary" href="#media">Все медиа</a>
           </div>
         </article>
+    </div>
+    <div class="podcast-archive">
+      <div class="section-title">
+        <span class="eyebrow">Архив</span>
+        <h2>Будущие выпуски</h2>
+        <p>Когда выйдет следующее интервью, оно станет главным выпуском наверху, а этот разговор переместится в архив.</p>
       </div>
-    </section>
-    <section class="section">
-      <div class="section-inner">
-        <div class="section-title">
-          <span class="eyebrow">Дальше</span>
-          <h2>Архив будущих выпусков</h2>
-          <p>Когда появятся следующие интервью, здесь будет сетка выпусков с темами, героинями и ссылками на видео.</p>
-        </div>
         <div class="card-grid">
           ${["Следующий выпуск", "Героини клуба", "Разговоры с авторами"].map((item, index) => featureCard(index + 1, item, "Место для будущих эпизодов подкаста PAGE17.")).join("")}
         </div>
-      </div>
-    </section>
+    </div>
   `;
 }
 
