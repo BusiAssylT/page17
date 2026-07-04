@@ -80,6 +80,18 @@ const pressLinks = [
   }
 ];
 
+const podcastEpisodes = [
+  {
+    number: "01",
+    title: "Первое интервью PAGE17",
+    subtitle: "Разговор с героиней о книгах, личном пути и живом интересе к чтению.",
+    url: "https://youtu.be/mLO7DZBuRyg?si=biMcqOUuM5JH4E4s",
+    embedUrl: "https://www.youtube.com/embed/mLO7DZBuRyg",
+    note: "Этот выпуск открывает будущую ежемесячную рубрику PAGE17: разговоры с героинями, авторами, читателями и людьми, которые формируют культурную среду вокруг книг.",
+    topics: ["книги и личные истории", "путь героини", "чтение как часть жизни", "разговоры вокруг литературы"]
+  }
+];
+
 const pageData = {
   readers: {
     tag: "Читателям",
@@ -154,6 +166,7 @@ const routes = {
   events: renderEvents,
   about: renderAbout,
   media: renderMedia,
+  podcast: renderPodcast,
   contacts: renderContacts
 };
 
@@ -224,7 +237,7 @@ function renderHome() {
         <p class="hero-description">Книжный клуб для тех, кто хочет читать, обсуждать, открывать новые книги и находить людей, с которыми хочется говорить глубже.</p>
         <div class="actions">
           <a class="button" href="${whatsAppUrl}" target="_blank" rel="noreferrer">Присоединиться к клубу</a>
-          <a class="button secondary" href="#events">Посмотреть ближайшую встречу</a>
+          <a class="button secondary" href="#books">Книга месяца</a>
         </div>
       </div>
     </section>
@@ -348,11 +361,67 @@ function renderMedia() {
         </div>
         <div class="media-panel" id="media-podcast">
           <article class="podcast-card">
-            <span class="eyebrow">Скоро</span>
-            <h2>Первый подкаст с героиней PAGE17</h2>
-            <p>Оставляем здесь место для постоянной ежемесячной рубрики: разговоры с героинями, авторами, читательницами и людьми, которые создают культурную среду вокруг книг.</p>
-            <a class="button secondary" href="#contacts">Предложить героиню</a>
+            <span class="eyebrow">Первый выпуск</span>
+            <h2>${podcastEpisodes[0].title}</h2>
+            <p>${podcastEpisodes[0].note}</p>
+            <div class="actions">
+              <a class="button" href="#podcast">Смотреть выпуск</a>
+              <a class="button secondary" href="#contacts">Предложить героиню</a>
+            </div>
           </article>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function renderPodcast() {
+  const episode = podcastEpisodes[0];
+
+  return `
+    <section class="page-hero">
+      <div class="section-inner">
+        <div>
+          <a class="back-link" href="#media">← В медиа</a>
+          <span class="eyebrow">Подкаст PAGE17</span>
+          <h1>Разговоры, которые продолжают книгу</h1>
+          <p class="hero-lead">Ежемесячная рубрика с героинями, авторами и людьми, для которых чтение становится частью личной и культурной истории.</p>
+        </div>
+        <div class="quote-panel">
+          <strong>Что будет на странице</strong>
+          <p>Видео выпуска, короткое описание, темы разговора, ссылки, заметки редакции и архив будущих эпизодов.</p>
+        </div>
+      </div>
+    </section>
+    <section class="section">
+      <div class="section-inner episode-layout">
+        <div class="video-shell">
+          <iframe src="${episode.embedUrl}" title="${episode.title}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+        </div>
+        <article class="episode-card">
+          <span class="eyebrow">Выпуск ${episode.number}</span>
+          <h2>${episode.title}</h2>
+          <p>${episode.subtitle}</p>
+          <p>${episode.note}</p>
+          <div class="topic-list">
+            ${episode.topics.map(topic => `<span>${topic}</span>`).join("")}
+          </div>
+          <div class="actions">
+            <a class="button" href="${episode.url}" target="_blank" rel="noreferrer">Открыть на YouTube</a>
+            <a class="button secondary" href="#media">Все медиа</a>
+          </div>
+        </article>
+      </div>
+    </section>
+    <section class="section">
+      <div class="section-inner">
+        <div class="section-title">
+          <span class="eyebrow">Дальше</span>
+          <h2>Архив будущих выпусков</h2>
+          <p>Когда появятся следующие интервью, здесь будет сетка выпусков с темами, героинями и ссылками на видео.</p>
+        </div>
+        <div class="card-grid">
+          ${["Следующий выпуск", "Героини клуба", "Разговоры с авторами"].map((item, index) => featureCard(index + 1, item, "Место для будущих эпизодов подкаста PAGE17.")).join("")}
         </div>
       </div>
     </section>
