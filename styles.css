@@ -624,6 +624,34 @@ p { margin: 0; color: var(--muted); }
 .episode-card h2 {
   font-size: clamp(32px, 4vw, 54px);
 }
+.guest-line {
+  display: grid;
+  gap: 4px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.guest-line strong {
+  font-size: 19px;
+}
+.guest-line span {
+  color: var(--muted);
+}
+.takeaway-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 2px;
+}
+.takeaway-list strong {
+  font-size: 15px;
+}
+.takeaway-list ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
+  color: var(--muted);
+}
 .topic-list {
   display: flex;
   flex-wrap: wrap;
