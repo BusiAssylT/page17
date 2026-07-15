@@ -28,7 +28,7 @@ values ('receipts', 'receipts', false, 5242880, array['image/jpeg','image/png','
 on conflict (id) do update set public=false, file_size_limit=5242880, allowed_mime_types=excluded.allowed_mime_types;
 
 drop policy if exists "anonymous receipt upload" on storage.objects;
-create policy "anonymous receipt upload" on storage.objects for insert to anon
+create policy "anonymous receipt upload" on storage.objects for insert to anon, authenticated
 with check (bucket_id='receipts' and (storage.foldername(name))[1] is null);
 
 create or replace function public.is_organizer() returns boolean language sql stable security definer set search_path=public as $$
