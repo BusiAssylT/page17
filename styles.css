@@ -43,16 +43,14 @@ button, input, textarea { font: inherit; }
   font-weight: 700;
   letter-spacing: 0;
 }
-.brand-mark {
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  color: var(--paper);
-  background: var(--graphite);
+.brand-logo {
+  display: block;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
-  font-family: "Playfair Display", Georgia, serif;
+  object-fit: cover;
 }
+.footer-brand .brand-logo { width: 84px; height: 84px; }
 .main-nav {
   display: flex;
   align-items: center;
