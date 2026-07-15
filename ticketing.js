@@ -38,10 +38,16 @@ async function initRegistration() {
     showNotice(notice, "Загружаем чек и создаём заявку…");
     const ext = receipt.name.split(".").pop().toLowerCase();
     const receiptPath = `${crypto.randomUUID()}.${ext}`;
-    const upload = await client.storage.from("receipts").upload(receiptPath, receipt, {contentType: receipt.type, upsert: false});
+    let upload = await client.storage.from("receipts").upload(receiptPath, receipt, {contentType: receipt.type, upsert: false});
+    // Some Android file providers expose PDFs as a File that fetch cannot stream
+    // reliably. Retrying with raw bytes keeps the same validation and MIME type.
+    if (upload.error && typeof receipt.arrayBuffer === "function") {
+      const bytes = await receipt.arrayBuffer();
+      upload = await client.storage.from("receipts").upload(receiptPath, bytes, {contentType: receipt.type, upsert: false});
+    }
     if (upload.error) {
       submit.disabled = false;
-      return showNotice(notice, "Не удалось загрузить чек. Попробуйте ещё раз.", "error");
+      return showNotice(notice, `Не удалось загрузить чек: ${upload.error.message || "неизвестная ошибка"}.`, "error");
     }
     const payload = {
       p_full_name: String(data.get("full_name")).trim(),
