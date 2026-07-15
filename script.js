@@ -467,11 +467,11 @@ function renderContacts() {
 function eventCard() {
   return `
     <article class="event-card">
-      <div class="event-date"><span>17</span><span>дата скоро</span></div>
+      <div class="event-date"><span>08</span><span>августа · 12:00</span></div>
       <div>
-        <h3>Следующая встреча PAGE17</h3>
-        <p>Скоро объявим следующую встречу. Следите за обновлениями в Instagram и Telegram или оставьте контакт, чтобы получить анонс.</p>
-        <a class="button" href="${whatsAppUrl}" target="_blank" rel="noreferrer">Зарегистрироваться</a>
+        <h3>Юбилей PAGE17 — нам 1 год</h3>
+        <p>Праздничная встреча в Quzylar Creative Center: фотовыставка, приглашённые спикеры, интерактив с психологом, мастер-класс и книжная викторина. Стоимость участия — 2000 ₸, всего 60 мест.</p>
+        <a class="button" href="register.html">Купить билет</a>
       </div>
     </article>
   `;
