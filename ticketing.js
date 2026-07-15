@@ -86,8 +86,8 @@ async function initTicket() {
   const status = document.querySelector("#ticket-status");
   status.textContent = ticket.checked_in_at ? "Билет уже использован" : "Билет действителен";
   status.classList.toggle("used", Boolean(ticket.checked_in_at));
-  const checkinUrl = `${cfg.siteUrl}/admin.html?checkin=${encodeURIComponent(token)}`;
-  new QRCode(document.querySelector("#ticket-qr"), {text: checkinUrl, width: 200, height: 200, correctLevel: QRCode.CorrectLevel.H});
+  const verifyUrl = `${cfg.siteUrl}/admin.html?verify=${encodeURIComponent(token)}`;
+  new QRCode(document.querySelector("#ticket-qr"), {text: verifyUrl, width: 200, height: 200, correctLevel: QRCode.CorrectLevel.H});
   notice.classList.add("hidden");
 }
 
@@ -105,6 +105,7 @@ async function initAdmin() {
   });
   document.querySelector("#logout").addEventListener("click", async () => { await client.auth.signOut(); location.reload(); });
   document.querySelector("#checkin-form").addEventListener("submit", handleCheckin);
+  document.querySelector("#confirm-checkin").addEventListener("click", confirmCheckin);
   const {data:{session}} = await client.auth.getSession();
   if (session) await loadAdmin();
 }
@@ -118,11 +119,11 @@ async function loadAdmin() {
   document.querySelector("#logout").classList.remove("hidden");
   notice.classList.add("hidden");
   renderApplications(result.data || []);
-  const checkinToken = new URLSearchParams(location.search).get("checkin");
-  if (checkinToken) {
-    document.querySelector("#checkin-token").value = checkinToken;
+  const verifyToken = new URLSearchParams(location.search).get("verify");
+  if (verifyToken) {
+    document.querySelector("#checkin-token").value = verifyToken;
     history.replaceState({}, "", location.pathname);
-    await checkInToken(checkinToken);
+    await verifyTicket(verifyToken);
   }
 }
 
@@ -206,19 +207,40 @@ async function handleCheckin(event) {
   if (raw.includes("=")) {
     try {
       const params = new URL(raw).searchParams;
-      token = params.get("checkin") || params.get("token") || raw;
+      token = params.get("verify") || params.get("checkin") || params.get("token") || raw;
     } catch (_) {}
   }
-  input.value = "";
-  await checkInToken(token);
+  await verifyTicket(token);
 }
 
-async function checkInToken(token) {
+async function verifyTicket(token) {
   const notice = document.querySelector("#checkin-notice");
-  const result = await client.rpc("check_in_ticket", {p_token: token});
+  const confirm = document.querySelector("#confirm-checkin");
+  confirm.classList.add("hidden");
+  confirm.dataset.token = "";
+  const result = await client.rpc("get_public_ticket", {p_token: token});
   if (result.error || !result.data?.length) return showNotice(notice, "Билет не найден.", "error");
   const ticket = result.data[0];
+  if (ticket.checked_in_at) return showNotice(notice, `${ticket.full_name} · ${ticket.serial_number}: билет уже использован.`, "error");
+  showNotice(notice, `${ticket.full_name} · ${ticket.serial_number}: билет действителен.`, "success");
+  confirm.dataset.token = token;
+  confirm.classList.remove("hidden");
+}
+
+async function confirmCheckin() {
+  const confirm = document.querySelector("#confirm-checkin");
+  const token = confirm.dataset.token;
+  if (!token) return;
+  confirm.disabled = true;
+  const notice = document.querySelector("#checkin-notice");
+  const result = await client.rpc("check_in_ticket", {p_token: token});
+  confirm.disabled = false;
+  confirm.classList.add("hidden");
+  confirm.dataset.token = "";
+  if (result.error || !result.data?.length) return showNotice(notice, "Не удалось подтвердить вход.", "error");
+  const ticket = result.data[0];
   showNotice(notice, ticket.was_already_used ? `${ticket.full_name}: билет уже использован ранее.` : `${ticket.full_name}: вход подтверждён.`, ticket.was_already_used ? "error" : "success");
+  document.querySelector("#checkin-token").value = "";
   await loadAdmin();
 }
 
