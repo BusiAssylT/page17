@@ -38,16 +38,20 @@ async function initRegistration() {
     showNotice(notice, "Загружаем чек и создаём заявку…");
     const ext = receipt.name.split(".").pop().toLowerCase();
     const receiptPath = `${crypto.randomUUID()}.${ext}`;
-    let upload = await client.storage.from("receipts").upload(receiptPath, receipt, {contentType: receipt.type, upsert: false});
-    // Some Android file providers expose PDFs as a File that fetch cannot stream
-    // reliably. Retrying with raw bytes keeps the same validation and MIME type.
-    if (upload.error && typeof receipt.arrayBuffer === "function") {
-      const bytes = await receipt.arrayBuffer();
-      upload = await client.storage.from("receipts").upload(receiptPath, bytes, {contentType: receipt.type, upsert: false});
+    let upload;
+    try {
+      upload = await client.storage.from("receipts").upload(receiptPath, receipt, {contentType: receipt.type, upsert: false});
+      if (upload.error && receipt.type === "application/pdf" && typeof receipt.arrayBuffer === "function") {
+        const bytes = await receipt.arrayBuffer();
+        upload = await client.storage.from("receipts").upload(receiptPath, bytes, {contentType: receipt.type, upsert: false});
+      }
+    } catch (error) {
+      upload = {error};
     }
     if (upload.error) {
+      console.error("Receipt upload failed", upload.error);
       submit.disabled = false;
-      return showNotice(notice, `Не удалось загрузить чек: ${upload.error.message || "неизвестная ошибка"}.`, "error");
+      return showNotice(notice, "Не удалось загрузить чек. Обновите страницу и попробуйте ещё раз.", "error");
     }
     const payload = {
       p_full_name: String(data.get("full_name")).trim(),
@@ -68,9 +72,8 @@ async function initRegistration() {
 }
 
 async function initTicket() {
-  const root = document.querySelector("#ticket-root");
-  if (!root) return;
   const notice = document.querySelector("#ticket-notice");
+  if (!notice) return;
   if (!requireClient(notice)) return;
   const token = new URLSearchParams(location.search).get("token");
   if (!token) return showNotice(notice, "В ссылке отсутствует код билета.", "error");
@@ -128,21 +131,60 @@ function renderApplications(rows) {
   document.querySelector("#stat-issued").textContent = rows.filter(r => r.status === "issued").length;
   document.querySelector("#stat-used").textContent = rows.filter(r => r.checked_in_at).length;
   const list = document.querySelector("#applications");
-  list.innerHTML = rows.map(row => {
+  list.replaceChildren();
+  if (!rows.length) {
+    const empty = document.createElement("p");
+    empty.textContent = "Заявок пока нет.";
+    list.append(empty);
+    return;
+  }
+  rows.forEach(row => {
     const ticketUrl = row.ticket_token ? `${cfg.siteUrl}/ticket.html?token=${encodeURIComponent(row.ticket_token)}` : "";
     const message = `Здравствуйте, ${row.full_name}! Оплата подтверждена. Ваш именной билет на юбилей PAGE17: ${ticketUrl}`;
-    return `<article class="application">
-      <div><h3>${escapeHtml(row.full_name)}</h3><p>Заявка №${row.application_number} · +${escapeHtml(row.whatsapp)} · ${statusLabel(row)}</p>${row.serial_number ? `<strong>${row.serial_number}</strong>` : ""}</div>
-      <div class="application-actions">
-        <button class="button secondary" data-receipt="${escapeHtml(row.receipt_path)}">Чек</button>
-        ${row.status === "pending" ? `<button class="button" data-approve="${row.id}">Подтвердить</button><button class="button danger" data-reject="${row.id}">Отклонить</button>` : ""}
-        ${row.status === "issued" ? `<a class="button" target="_blank" rel="noreferrer" href="https://wa.me/${row.whatsapp}?text=${encodeURIComponent(message)}">WhatsApp</a>` : ""}
-      </div>
-    </article>`;
-  }).join("") || "<p>Заявок пока нет.</p>";
+    const article = document.createElement("article");
+    article.className = "application";
+    const info = document.createElement("div");
+    const title = document.createElement("h3");
+    title.textContent = row.full_name;
+    const meta = document.createElement("p");
+    meta.textContent = `Заявка №${row.application_number} · +${row.whatsapp} · ${statusLabel(row)}`;
+    info.append(title, meta);
+    if (row.serial_number) {
+      const serial = document.createElement("strong");
+      serial.textContent = row.serial_number;
+      info.append(serial);
+    }
+    const actions = document.createElement("div");
+    actions.className = "application-actions";
+    actions.append(actionButton("Чек", "button secondary", "receipt", row.receipt_path));
+    if (row.status === "pending") {
+      actions.append(actionButton("Подтвердить", "button", "approve", row.id));
+      actions.append(actionButton("Отклонить", "button danger", "reject", row.id));
+    }
+    if (row.status === "issued") {
+      const whatsApp = document.createElement("a");
+      whatsApp.className = "button";
+      whatsApp.target = "_blank";
+      whatsApp.rel = "noreferrer";
+      whatsApp.href = `https://wa.me/${row.whatsapp}?text=${encodeURIComponent(message)}`;
+      whatsApp.textContent = "WhatsApp";
+      actions.append(whatsApp);
+    }
+    article.append(info, actions);
+    list.append(article);
+  });
   list.querySelectorAll("[data-receipt]").forEach(button => button.addEventListener("click", () => openReceipt(button.dataset.receipt)));
   list.querySelectorAll("[data-approve]").forEach(button => button.addEventListener("click", () => updateApplication("approve_registration", button.dataset.approve)));
   list.querySelectorAll("[data-reject]").forEach(button => button.addEventListener("click", () => updateApplication("reject_registration", button.dataset.reject)));
+}
+
+function actionButton(label, className, dataName, value) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = className;
+  button.dataset[dataName] = value;
+  button.textContent = label;
+  return button;
 }
 
 async function openReceipt(path) {
@@ -183,10 +225,6 @@ async function checkInToken(token) {
 function statusLabel(row) {
   if (row.checked_in_at) return "использован";
   return {pending:"ожидает проверки", issued:"билет выдан", rejected:"отклонена"}[row.status] || row.status;
-}
-
-function escapeHtml(value) {
-  return String(value).replace(/[&<>'"]/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[char]));
 }
 
 initRegistration();
